@@ -1,13 +1,16 @@
-const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
+const Brevo = require("@getbrevo/brevo");
+
+const client = Brevo.ApiClient.instance;
+client.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
 
 const sendOTP = async (email, otp) => {
-  await resend.emails.send({
-    
-    from: 'Giftbow 🌈 <onboarding@resend.dev>',
-    to: email,
-    subject: 'Your Giftbow OTP Code',
-    html: `
+  const apiInstance = new Brevo.TransactionalEmailsApi();
+  
+  await apiInstance.sendTransacEmail({
+    sender: { name: "Giftbow 🌈", email: "noreply@giftbow.com" },
+    to: [{ email }],
+    subject: "Your Giftbow OTP Code",
+    htmlContent: `
       <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border-radius: 12px; border: 1px solid #F26076;">
         <h2 style="color: #F26076;">Giftbow 🌈</h2>
         <p>Your OTP is:</p>
