@@ -34,7 +34,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/products", productRoutes);
 
 
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
 });
 
