@@ -7,7 +7,7 @@ const sendOTP = async (email, otp) => {
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
   await apiInstance.sendTransacEmail({
-    sender: { name: "Giftbow 🎁", email: "noreply@giftbow.com" },
+    sender: { name: "Giftbow 🎁", email: "sonichaudhary.dev@gmail.com" },
     to: [{ email }],
     subject: "Your Giftbow OTP Code",
     htmlContent: `
