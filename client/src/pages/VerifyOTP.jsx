@@ -12,12 +12,23 @@ function VerifyOTP() {
   const userId = location.state?.userId;
   const { getMe } = useAuthStore();
 
+  // ✅ Bug 1 Fix — userId nahi hai toh signup pe bhejo
+  if (!userId) {
+    navigate("/signup");
+    return null;
+  }
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/auth/verify-otp", { userId, otp }, { withCredentials: true });
+      // ✅ Bug 2 Fix — otp trim karo spaces hatane ke liye
+      await axios.post(
+        "/api/auth/verify-otp",
+        { userId, otp: otp.trim() },
+        { withCredentials: true }
+      );
       await getMe();
       navigate("/");
     } catch (err) {
@@ -55,8 +66,12 @@ function VerifyOTP() {
             <input
               type="text"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder=" _ _ _ _ _ _ "
+              onChange={(e) => {
+                // ✅ Sirf numbers allow karo
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                setOtp(val);
+              }}
+              placeholder="_ _ _ _ _ _"
               maxLength={6}
               required
               className="w-full text-center text-2xl font-bold tracking-widest bg-coral/5 dark:bg-white/5 border border-coral/20 dark:border-white/10 rounded-xl px-4 py-4 outline-none focus:border-coral transition-colors dark:text-white placeholder:text-gray-300"
