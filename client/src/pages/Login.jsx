@@ -34,7 +34,7 @@ function Login() {
             Giftbow 🌈
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            Welcome back! Login k
+            Welcome back! Login 
           </p>
         </div>
 
