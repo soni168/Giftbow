@@ -1,19 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp.resend.com",
   port: 465,
   secure: true,
-  family: 4,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: "resend",
+    pass: process.env.RESEND_API_KEY,
   },
 });
 
 const sendOTP = async (email, otp) => {
-  await transporter.sendMail({
-    from: `"Giftbow 🌈" <${process.env.EMAIL_USER}>`,
+  await transporter.sendMail({   
+   from: `"Giftbow 🌈" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Your Giftbow OTP Code",
     html: `
