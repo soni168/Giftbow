@@ -29,7 +29,7 @@ function Home() {
           gift 🎁
         </h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto text-lg">
-          Confuse about what to gift... Visit GiftBow!!
+          Confuse about what to gift...
         </p>
       </div>
 

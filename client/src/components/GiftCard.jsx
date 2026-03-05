@@ -39,15 +39,15 @@ function GiftCard({ gift }) {
 
   return (
     <div className="group relative bg-white dark:bg-[#242424] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-[#F26076]/10 dark:border-white/5">
-      
-      {/* Image */}
-      <div className="relative overflow-hidden">
+
+      {/* Image — fixed height */}
+      <div className="relative overflow-hidden h-44 sm:h-48">
         <img
           src={gift.imageUrl}
           alt={gift.title}
-          className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        
+
         {/* Trending Badge */}
         {gift.isTrending && (
           <span className="absolute top-3 left-3 bg-[#F26076] text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -66,11 +66,11 @@ function GiftCard({ gift }) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3">
         <h3 className="font-display font-semibold text-gray-800 dark:text-white text-sm mb-1 line-clamp-1">
           {gift.title}
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">
           {gift.description}
         </p>
 
@@ -87,7 +87,7 @@ function GiftCard({ gift }) {
         </div>
 
         {/* Tags */}
-        <div className="flex gap-2 mt-3 flex-wrap">
+        <div className="flex gap-1.5 mt-2 flex-wrap">
           <span className="text-xs bg-[#FF9760]/10 text-[#FF9760] px-2 py-0.5 rounded-full capitalize">
             {gift.occasion}
           </span>

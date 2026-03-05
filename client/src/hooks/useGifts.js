@@ -10,14 +10,12 @@ const useGifts = (filters = {}) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef(null);
-  const refreshedRef = useRef(false); // prevent infinite loop
 
   // Reset when filters change
   useEffect(() => {
     setGifts([]);
     setPage(1);
     setHasMore(true);
-    refreshedRef.current = false;
   }, [filters.category, filters.occasion, filters.minPrice, filters.maxPrice, filters.trending]);
 
   // Fetch gifts whenever page or filters change
@@ -54,24 +52,6 @@ const useGifts = (filters = {}) => {
 
     fetchGifts();
   }, [page, filters.category, filters.occasion, filters.minPrice, filters.maxPrice, filters.trending]);
-
-  // Auto-fetch from Amazon ONCE when gifts run out
-  useEffect(() => {
-    const refetchFromAmazon = async () => {
-      if (!hasMore && !loading && gifts.length > 0 && !refreshedRef.current) {
-        refreshedRef.current = true; // sirf ek baar
-        try {
-          await axios.get(`${API}/products/refresh`, { withCredentials: true });
-          setGifts([]);
-          setPage(1);
-          setHasMore(true);
-        } catch (err) {
-          console.error("Auto-refresh failed:", err.message);
-        }
-      }
-    };
-    refetchFromAmazon();
-  }, [hasMore, loading]);
 
   // Infinite scroll — observe last element
   const lastGiftRef = useCallback((node) => {
