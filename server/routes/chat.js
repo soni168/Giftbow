@@ -12,10 +12,14 @@ router.post("/", protect, async (req, res) => {
     const { message } = req.body;
     const userId = req.user._id;
 
-    // Fetch gifts for context
-    const gifts = await Gift.find({}).limit(50).select("title description price category occasion isTrending");
+    if (!message?.trim()) {
+      return res.status(400).json({ message: "Message empty hai!" });
+    }
+
+    // ✅ Bug 1 Fix — limit kam karo aur sirf relevant fields lo
+    const gifts = await Gift.find({}).limit(20).select("title price category occasion isTrending");
     const giftsContext = gifts.map(g =>
-      `${g.title} | ${g.category} | ${g.occasion} | ₹${g.price} | ${g.isTrending ? "Trending" : ""}`
+      `${g.title} | ${g.category} | ${g.occasion} | ₹${g.price}${g.isTrending ? " | Trending" : ""}`
     ).join("\n");
 
     const systemPrompt = `Tu Giftbow ka AI gift assistant hai.
@@ -34,28 +38,27 @@ User ki baat sun, unka budget, occasion aur preferences samjho, phir best gifts 
       chat = await Chat.create({ userId, messages: [] });
     }
 
-    // Build history from past messages
+    // ✅ Bug 2 Fix — history slice karo current message se PEHLE
+    // Aur current message history mein include mat karo
     const history = chat.messages.slice(-10).map(m => ({
       role: m.role === "model" ? "assistant" : "user",
       content: m.content,
     }));
 
-    // Save user message to DB
-    chat.messages.push({ role: "user", content: message });
-
-    // Call Groq
+    // ✅ Bug 3 Fix — Groq pehle call karo, save baad mein
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
         ...history,
-        { role: "user", content: message },
+        { role: "user", content: message }, // sirf ek baar
       ],
     });
 
     const aiResponse = completion.choices[0].message.content;
 
-    // Save AI response to DB
+    // Dono messages ek saath save karo — sirf Groq success ke baad
+    chat.messages.push({ role: "user", content: message });
     chat.messages.push({ role: "model", content: aiResponse });
     await chat.save();
 

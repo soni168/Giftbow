@@ -56,7 +56,7 @@ function VerifyOTP() {
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              placeholder="_ _ _ _ _ _ "
+              placeholder=" _ _ _ _ _ _ "
               maxLength={6}
               required
               className="w-full text-center text-2xl font-bold tracking-widest bg-coral/5 dark:bg-white/5 border border-coral/20 dark:border-white/10 rounded-xl px-4 py-4 outline-none focus:border-coral transition-colors dark:text-white placeholder:text-gray-300"

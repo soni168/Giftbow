@@ -24,6 +24,21 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
+// ✅ Helper — Cloudinary se image delete karo URL se
+const deleteFromCloudinary = async (imageUrl) => {
+  try {
+    if (!imageUrl || !imageUrl.includes("cloudinary")) return;
+    // URL se public_id nikalo — "giftbow/abc123" jaisa hoga
+    const parts = imageUrl.split("/");
+    const filename = parts[parts.length - 1].split(".")[0];
+    const folder = parts[parts.length - 2];
+    const publicId = `${folder}/${filename}`;
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("Cloudinary delete failed:", err.message);
+  }
+};
+
 // @GET /api/admin/gifts — saare gifts
 router.get("/gifts", protect, adminOnly, async (req, res) => {
   try {
@@ -38,6 +53,11 @@ router.get("/gifts", protect, adminOnly, async (req, res) => {
 router.post("/gifts", protect, adminOnly, upload.single("image"), async (req, res) => {
   try {
     const { title, description, price, category, occasion, buyLink } = req.body;
+
+    // ✅ Bug 1 Fix — image nahi aaya toh clear error do
+    if (!req.file) {
+      return res.status(400).json({ message: "Image upload karo!" });
+    }
 
     const gift = await Gift.create({
       title,
@@ -72,6 +92,8 @@ router.put("/gifts/:id", protect, adminOnly, upload.single("image"), async (req,
     gift.isTrending = isTrending !== undefined ? isTrending === "true" : gift.isTrending;
 
     if (req.file) {
+      // ✅ Bug 3 Fix — pehle purani image Cloudinary se hatao
+      await deleteFromCloudinary(gift.imageUrl);
       gift.imageUrl = req.file.path;
     }
 
@@ -85,7 +107,13 @@ router.put("/gifts/:id", protect, adminOnly, upload.single("image"), async (req,
 // @DELETE /api/admin/gifts/:id — gift delete karo
 router.delete("/gifts/:id", protect, adminOnly, async (req, res) => {
   try {
-    await Gift.findByIdAndDelete(req.params.id);
+    const gift = await Gift.findById(req.params.id);
+    if (!gift) return res.status(404).json({ message: "Gift not found" });
+
+    // ✅ Bug 2 Fix — pehle Cloudinary se image hatao, phir DB se
+    await deleteFromCloudinary(gift.imageUrl);
+    await gift.deleteOne();
+
     res.json({ message: "Gift deleted!" });
   } catch (error) {
     res.status(500).json({ message: error.message });

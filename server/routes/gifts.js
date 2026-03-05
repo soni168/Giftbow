@@ -40,6 +40,7 @@ router.get("/", async (req, res) => {
 });
 
 // @GET /api/gifts/trending — sirf trending gifts
+// ✅ Bug 1 — ye /:id se UPAR hai, sahi jagah hai, kabhi neeche mat karna!
 router.get("/trending", async (req, res) => {
   try {
     const gifts = await Gift.find({ isTrending: true })
@@ -57,11 +58,20 @@ router.get("/:id", async (req, res) => {
     const gift = await Gift.findById(req.params.id);
     if (!gift) return res.status(404).json({ message: "Gift not found" });
 
-    gift.views += 1;
-    gift.trendingScore = gift.views + gift.saves * 2 + gift.clicks * 3;
-    await gift.save();
+    // ✅ Bug 3 Fix — findByIdAndUpdate use karo, save() nahi
+    // $inc atomic hai — race condition nahi hogi, aur ek hi query mein hoga
+    const updatedGift = await Gift.findByIdAndUpdate(
+      req.params.id,
+      {
+        $inc: { views: 1 },
+        $set: {
+          trendingScore: gift.views + 1 + gift.saves * 2 + gift.clicks * 3,
+        },
+      },
+      { new: true }
+    );
 
-    res.json(gift);
+    res.json(updatedGift);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -73,9 +83,13 @@ router.post("/:id/click", async (req, res) => {
     const gift = await Gift.findById(req.params.id);
     if (!gift) return res.status(404).json({ message: "Gift not found" });
 
-    gift.clicks += 1;
-    gift.trendingScore = gift.views + gift.saves * 2 + gift.clicks * 3;
-    await gift.save();
+    // ✅ Same fix — atomic update
+    await Gift.findByIdAndUpdate(req.params.id, {
+      $inc: { clicks: 1 },
+      $set: {
+        trendingScore: gift.views + gift.saves * 2 + (gift.clicks + 1) * 3,
+      },
+    });
 
     res.json({ message: "Click tracked" });
   } catch (error) {
@@ -96,7 +110,8 @@ router.post("/:id/save", protect, async (req, res) => {
       user.savedGifts = user.savedGifts.filter(
         (id) => id.toString() !== gift._id.toString()
       );
-      gift.saves -= 1;
+      // ✅ Bug 2 Fix — saves kabhi 0 se neeche na jaaye
+      gift.saves = Math.max(0, gift.saves - 1);
     } else {
       user.savedGifts.push(gift._id);
       gift.saves += 1;

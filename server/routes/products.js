@@ -21,6 +21,9 @@ const giftKeywords = [
   { query: "personalised gifts india", category: "unisex", occasion: "birthday" },
 ];
 
+// ✅ Sleep helper
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const fetchAndSave = async ({ query, category, occasion }, page = "1") => {
   const response = await axios.get(
     "https://real-time-amazon-data.p.rapidapi.com/search",
@@ -39,7 +42,9 @@ const fetchAndSave = async ({ query, category, occasion }, page = "1") => {
     }
   );
 
-  const products = response.data.data.products;
+  // ✅ Safe check — products nahi aaye toh crash nahi
+  const products = response.data?.data?.products;
+  if (!products || products.length === 0) return 0;
 
   const gifts = products
     .filter((p) => p.product_photo && p.product_price && p.product_url)
@@ -57,22 +62,20 @@ const fetchAndSave = async ({ query, category, occasion }, page = "1") => {
       trendingScore: Math.floor(Math.random() * 40) + 60,
     }));
 
-  let saved = 0;
-  for (const gift of gifts) {
-    const exists = await Gift.findOne({ title: gift.title });
-    if (!exists) {
-      await Gift.create(gift);
-      saved++;
-    }
-  }
-  return saved;
+  // ✅ Ek hi query mein duplicate check — fast
+  const titles = gifts.map((g) => g.title);
+  const existing = await Gift.find({ title: { $in: titles } }).select("title");
+  const existingTitles = new Set(existing.map((e) => e.title));
+
+  const newGifts = gifts.filter((g) => !existingTitles.has(g.title));
+  if (newGifts.length > 0) await Gift.insertMany(newGifts);
+
+  return newGifts.length;
 };
 
 /* =========================
    🔥 REFRESH FUNCTION
 ========================= */
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const refreshAllProducts = async () => {
   let totalSaved = 0;
@@ -87,10 +90,10 @@ const refreshAllProducts = async () => {
         console.error(`Failed: ${keyword.query} page ${page} — ${err.message}`);
       }
 
-      await sleep(1500); // ← Har request ke baad 1.5 second ruko
+      await sleep(1500); // Har request ke baad 1.5s ruko
     }
 
-    await sleep(3000); // ← Har keyword ke baad 3 second ruko
+    await sleep(3000); // Har keyword ke baad 3s ruko
   }
 
   return totalSaved;

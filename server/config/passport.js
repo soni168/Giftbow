@@ -11,15 +11,32 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        const email = profile.emails[0].value;
+        const avatar = profile.photos[0]?.value;
 
+        // ✅ Pehle googleId se dhundho
+        let user = await User.findOne({ googleId: profile.id });
         if (user) return done(null, user);
 
+        // ✅ Phir same email se dhundho — shayad password wala account ho
+        user = await User.findOne({ email });
+
+        if (user) {
+          // Email mil gayi — Google se link kar do existing account ko
+          user.googleId = profile.id;
+          if (!user.avatar) user.avatar = avatar;
+          user.isVerified = true; // Google ne verify kar diya
+          await user.save();
+          return done(null, user);
+        }
+
+        // ✅ Bilkul naya user — create karo
         user = await User.create({
           name: profile.displayName,
-          email: profile.emails[0].value,
-          avatar: profile.photos[0].value,
+          email,
+          avatar,
           googleId: profile.id,
+          isVerified: true, // Google login mein OTP ki zaroorat nahi
         });
 
         return done(null, user);

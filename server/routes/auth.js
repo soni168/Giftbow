@@ -18,31 +18,46 @@ const generateToken = (res, userId) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
+
 // @POST /api/auth/signup
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
+    const existingUser = await User.findOne({ email });
+
+    // ✅ Bug 1 Fix — Verified user block karo, unverified ko new OTP do
+    if (existingUser && existingUser.isVerified) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      otp: {
+    let user;
+
+    if (existingUser && !existingUser.isVerified) {
+      // Pehle se hai but verify nahi hua — update kar do
+      existingUser.password = hashedPassword;
+      existingUser.otp = {
         code: otp,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-      isVerified: false,
-    });
+      };
+      user = await existingUser.save();
+    } else {
+      // Bilkul naya user
+      user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        otp: {
+          code: otp,
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        },
+        isVerified: false,
+      });
+    }
 
     try {
       await sendOTP(email, otp);
@@ -60,43 +75,7 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-// @POST /api/auth/signup
-/*router.post("/signup", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      otp: {
-        code: otp,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-      isVerified: false,
-    });
-
-    await sendOTP(email, otp);
-
-    res.status(201).json({
-      message: "OTP sent! Email check karo!",
-      userId: user._id,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-*/
 // @POST /api/auth/verify-otp
 router.post("/verify-otp", async (req, res) => {
   try {
@@ -105,7 +84,8 @@ router.post("/verify-otp", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.otp.code !== otp) {
+    // ✅ Bug 2 Fix — dono ko string banao compare karne se pehle
+    if (user.otp.code !== String(otp)) {
       return res.status(400).json({ message: "Galat OTP!" });
     }
 
@@ -138,6 +118,11 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // ✅ Bug 3 Fix — unverified user ko login mat karo
+    if (!user.isVerified) {
+      return res.status(400).json({ message: "Pehle email verify karo!" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
