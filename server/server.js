@@ -6,9 +6,9 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const cron = require("node-cron");
-const axios = require("axios");
 const connectDB = require("./config/db");
-const path = require('path');
+const path = require("path");
+
 require("./config/passport");
 connectDB();
 
@@ -18,32 +18,39 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
-const productRoutes = require("./routes/products");
+const { router: productRoutes, refreshAllProducts } = require("./routes/products");
 const authRoutes = require("./routes/auth");
 const giftRoutes = require("./routes/gifts");
 const chatRoutes = require("./routes/chat");
 
-app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/gifts", giftRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/products", productRoutes);
 
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
 });
 
+/* =========================
+   ⏰ 12-HOUR CRON
+========================= */
+
 cron.schedule("0 */12 * * *", async () => {
-  console.log("🔄 Auto-fetching trending gifts...");
+  console.log("⏰ 12-hour cron triggered");
+
   try {
-    await axios.get("http://localhost:5000/api/products/refresh");
-    console.log("✅ Gifts auto-fetched!");
+    const totalSaved = await refreshAllProducts();
+    console.log(`✅ ${totalSaved} products refreshed`);
   } catch (error) {
-    console.error("❌ Auto-fetch failed:", error.message);
+    console.error("❌ Cron failed:", error.message);
   }
 });
 

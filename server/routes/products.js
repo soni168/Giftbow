@@ -68,26 +68,31 @@ const fetchAndSave = async ({ query, category, occasion }, page = "1") => {
   return saved;
 };
 
-// @GET /api/products/debug — raw Amazon response dekho
-router.get("/debug", async (req, res) => {
-  try {
-    const response = await axios.get(
-      "https://real-time-amazon-data.p.rapidapi.com/search",
-      {
-        params: { query: "birthday gifts", page: "1", country: "IN" },
-        headers: {
-          "X-RapidAPI-Key": RAPIDAPI_KEY,
-          "X-RapidAPI-Host": RAPIDAPI_HOST,
-        },
-      }
-    );
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+/* =========================
+   🔥 REFRESH FUNCTION
+========================= */
 
-// @GET /api/products/fetch — ek keyword se fetch karo
+const refreshAllProducts = async () => {
+  let totalSaved = 0;
+
+  for (const keyword of giftKeywords) {
+    for (const page of ["1", "2", "3"]) {
+      try {
+        const saved = await fetchAndSave(keyword, page);
+        totalSaved += saved;
+      } catch (err) {
+        console.error(`Failed: ${keyword.query} page ${page} — ${err.message}`);
+      }
+    }
+  }
+
+  return totalSaved;
+};
+
+/* =========================
+   ROUTES
+========================= */
+
 router.get("/fetch", async (req, res) => {
   try {
     const keyword = giftKeywords[Math.floor(Math.random() * giftKeywords.length)];
@@ -98,26 +103,13 @@ router.get("/fetch", async (req, res) => {
   }
 });
 
-// @GET /api/products/refresh — saare keywords + multiple pages fetch karo
 router.get("/refresh", async (req, res) => {
   try {
-    let totalSaved = 0;
-
-    for (const keyword of giftKeywords) {
-      for (const page of ["1", "2", "3"]) {
-        try {
-          const saved = await fetchAndSave(keyword, page);
-          totalSaved += saved;
-        } catch (err) {
-          console.error(`Failed: ${keyword.query} page ${page} — ${err.message}`);
-        }
-      }
-    }
-
+    const totalSaved = await refreshAllProducts();
     res.json({ message: `Total ${totalSaved} new gifts saved!` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-module.exports = router;
+module.exports = { router, refreshAllProducts };
