@@ -56,7 +56,7 @@ router.post("/gifts", protect, adminOnly, upload.single("image"), async (req, re
 
     // ✅ Bug 1 Fix — image nahi aaya toh clear error do
     if (!req.file) {
-      return res.status(400).json({ message: "Image upload karo!" });
+      return res.status(400).json({ message: "Image upload!" });
     }
 
     const gift = await Gift.create({

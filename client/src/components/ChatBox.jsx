@@ -59,7 +59,7 @@ function ChatBox() {
           🎁 AI Gift Assistant
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Powered by Gemini • Hinglish mein baat karo!
+          Powered by Groq • Hinglish mein baat karo!
         </p>
       </div>
 

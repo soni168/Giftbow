@@ -67,7 +67,7 @@ router.post("/signup", async (req, res) => {
     }
 
     res.status(201).json({
-      message: "OTP sent! Email check karo!",
+      message: "OTP sent! check email...",
       userId: user._id,
     });
   } catch (error) {
@@ -86,11 +86,11 @@ router.post("/verify-otp", async (req, res) => {
 
     // ✅ Bug 2 Fix — dono ko string banao compare karne se pehle
     if (user.otp.code !== String(otp)) {
-      return res.status(400).json({ message: "Galat OTP!" });
+      return res.status(400).json({ message: "Wrong OTP!" });
     }
 
     if (user.otp.expiresAt < new Date()) {
-      return res.status(400).json({ message: "OTP expire ho gaya!" });
+      return res.status(400).json({ message: "OTP expired!" });
     }
 
     user.isVerified = true;
@@ -122,7 +122,7 @@ router.post("/login", async (req, res) => {
 
     // ✅ Bug 3 Fix — unverified user ko login mat karo
     if (!user.isVerified) {
-      return res.status(400).json({ message: "Pehle email verify karo!" });
+      return res.status(400).json({ message: "Verify Email first!" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
