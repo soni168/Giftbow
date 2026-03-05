@@ -41,9 +41,9 @@ app.use((req, res) => {
 
 /* =========================
    ⏰ 12-HOUR CRON
-========================= */
+========================= 
 
-cron.schedule("0 */12 * * *", async () => {
+cron.schedule("0 *//*12 * * *", async () => {
   console.log("⏰ 12-hour cron triggered");
 
   try {
@@ -53,6 +53,7 @@ cron.schedule("0 */12 * * *", async () => {
     console.error("❌ Cron failed:", error.message);
   }
 });
+*/
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

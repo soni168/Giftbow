@@ -93,7 +93,7 @@ const refreshAllProducts = async () => {
       await sleep(1500); // Har request ke baad 1.5s ruko
     }
 
-    await sleep(3000); // Har keyword ke baad 3s ruko
+    await sleep(5000); // Har keyword ke baad 3s ruko
   }
 
   return totalSaved;
