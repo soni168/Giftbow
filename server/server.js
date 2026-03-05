@@ -33,8 +33,7 @@ app.use("/api/gifts", giftRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/products", productRoutes);
 
-
-app.get('/{*path}', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
 });
 
