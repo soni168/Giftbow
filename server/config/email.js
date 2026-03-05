@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOTP = async (email, otp) => {
   await transporter.sendMail({   
-   from: `"Giftbow 🌈" <${process.env.EMAIL_USER}>`,
+    from: `"Giftbow 🌈" <onboarding@resend.dev>`,
     to: email,
     subject: "Your Giftbow OTP Code",
     html: `
