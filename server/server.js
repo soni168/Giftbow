@@ -8,6 +8,7 @@ const passport = require("passport");
 const cron = require("node-cron");
 const axios = require("axios");
 const connectDB = require("./config/db");
+const path = require('path');
 require("./config/passport");
 connectDB();
 
@@ -26,14 +27,15 @@ const authRoutes = require("./routes/auth");
 const giftRoutes = require("./routes/gifts");
 const chatRoutes = require("./routes/chat");
 
+app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use("/api/auth", authRoutes);
 app.use("/api/gifts", giftRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/products", productRoutes);
 
 
-app.get("/", (req, res) => {
-  res.send("Giftbow API is running 🌈");
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
 });
 
 cron.schedule("0 */12 * * *", async () => {
