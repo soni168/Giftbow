@@ -72,6 +72,8 @@ const fetchAndSave = async ({ query, category, occasion }, page = "1") => {
    🔥 REFRESH FUNCTION
 ========================= */
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const refreshAllProducts = async () => {
   let totalSaved = 0;
 
@@ -80,10 +82,15 @@ const refreshAllProducts = async () => {
       try {
         const saved = await fetchAndSave(keyword, page);
         totalSaved += saved;
+        console.log(`✅ ${keyword.query} page ${page} — saved: ${saved}`);
       } catch (err) {
         console.error(`Failed: ${keyword.query} page ${page} — ${err.message}`);
       }
+
+      await sleep(1500); // ← Har request ke baad 1.5 second ruko
     }
+
+    await sleep(3000); // ← Har keyword ke baad 3 second ruko
   }
 
   return totalSaved;
